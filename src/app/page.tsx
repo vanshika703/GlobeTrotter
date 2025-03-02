@@ -1003,7 +1003,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-[#5d1eb5] via-white to-[#f0e7ff] flex flex-col">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-[#f0e7ff] via-white to-[#f0e7ff] flex flex-col">
       <div className="max-w-4xl w-full mx-auto px-4 py-4 flex flex-col h-full">
         <div className="text-center mb-4">
           <h1 className="text-4xl font-bold text-[#5d1eb5] mb-2">
