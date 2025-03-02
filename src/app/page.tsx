@@ -1022,7 +1022,7 @@ export default function Home() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleShare}
-              className="px-4 py-2 bg-white rounded-full shadow-md text-[#5d1eb5] font-medium hover:bg-[#f8f9fa] transition-colors flex items-center gap-2"
+              className="px-4 py-2 text-black bg-white rounded-full shadow-md text-[#5d1eb5] font-medium hover:bg-[#f8f9fa] transition-colors flex items-center gap-2"
             >
               <span>🤝</span>
               Challenge Friends
@@ -1135,7 +1135,7 @@ export default function Home() {
               className="bg-white rounded-xl p-6 max-w-md w-full"
             >
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Challenge a Friend</h2>
+                <h2 className="text-xl text-black font-semibold">Challenge a Friend</h2>
                 <button
                   onClick={() => setShowShareModal(false)}
                   className="text-[#666] hover:text-[#1a1a1a] transition-colors"
