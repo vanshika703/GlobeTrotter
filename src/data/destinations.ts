@@ -1,0 +1,3 @@
+export const destinations = [
+  // ... paste the entire destinations array here ...
+]; 
