@@ -1,3 +1,76 @@
+# 🌍 GlobeTrotter
+
+A fun and interactive geography quiz game that tests your knowledge of world destinations. Challenge your friends and learn interesting facts about cities around the globe!
+
+## 🎮 Features
+
+- 🎯 Interactive quiz game with multiple-choice answers
+- 🌟 70+ unique destinations with interesting clues and fun facts
+- 🎉 Engaging animations and feedback
+- 📊 Score tracking system
+- 🤝 Challenge friends via WhatsApp sharing
+- 💫 Points-based reward system
+- 🎨 Beautiful UI with smooth animations
+
+## 🚀 Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- React Hot Toast
+- Canvas Confetti
+
+## 🛠️ Installation
+
+1. Clone the repository:
+
+bash
+git clone https://github.com/yourusername/globetrotter.git
+
+
+2. Install dependencies:
+
+bash
+cd globetrotter
+npm install
+
+
+3. Run the development server:
+
+bash
+npm run dev
+
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🎯 How to Play
+
+1. Read the clues about a mystery destination
+2. Choose from four possible answers
+3. Get immediate feedback on your choice
+4. Learn interesting facts about each destination
+5. Challenge your friends to beat your score!
+
+## 🌟 Scoring System
+
+- 🎯 Correct answer on first try: 100 points
+- 🎯 Correct answer on second try: 50 points
+- 📉 Using hints: -25 points penalty
+
+
+## 🔮 Future Features
+
+- 🏆 Global leaderboard
+- 🎨 Different game modes
+- 🌍 Region-specific challenges
+- 📱 Mobile app version
+- 🎵 Sound effects and music
+- 🎮 Achievement system
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
