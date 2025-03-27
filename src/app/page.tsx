@@ -19,6 +19,8 @@ interface GameState {
     correct: number;
     total: number;
   };
+  streak: number;
+  questionTime: number;
   answered: boolean;
   isCorrect: boolean | null;
 }
@@ -48,6 +50,8 @@ export default function Home() {
       correct: 0,
       total: 0,
     },
+    streak: 4,
+    questionTime: 15,
     answered: false,
     isCorrect: null,
   });
@@ -62,6 +66,26 @@ export default function Home() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    let timer;
+
+    if (gameState?.questionTime >= 0 && !gameState?.answered)
+      timer = setInterval(() => {
+        setGameState((prev) => {
+          if (gameState?.questionTime <= 0) {
+            handleAnswer("");
+            return prev;
+          } else
+            return {
+              ...prev,
+              questionTime: prev?.questionTime - 1,
+            };
+        });
+      }, 1000);
+
+    return () => clearInterval(timer);
+  }, [gameState?.questionTime, gameState?.answered]);
+
   const generateOptions = (correctAnswer: string): string[] => {
     const allDestinations = destinations.map((d) => d.name);
     const shuffled = allDestinations
@@ -72,7 +96,7 @@ export default function Home() {
     return [...shuffled, correctAnswer].sort(() => Math.random() - 0.5);
   };
 
-  const startNewRound = () => {
+  const startNewRound = (newGame?: boolean) => {
     const randomDest =
       destinations[Math.floor(Math.random() * destinations.length)];
 
@@ -80,44 +104,68 @@ export default function Home() {
       currentDestination: randomDest,
       selectedClues: randomDest?.clues || [],
       options: generateOptions(randomDest?.name),
-      score: gameState.score,
+      score: {
+        correct: newGame ? 0 : gameState?.score?.correct,
+        total: newGame ? 0 : gameState?.score?.total,
+      },
+      streak: gameState?.streak,
+      questionTime: 15,
       answered: false,
       isCorrect: null,
     });
   };
 
   const retryCurrentRound = () => {
-    if (!gameState.currentDestination) return;
+    if (!gameState?.currentDestination) return;
 
     setGameState({
       ...gameState,
+      score: {
+        correct: 0,
+        total: 0,
+      },
+      streak: 0,
+      questionTime: 15,
       answered: false,
       isCorrect: null,
     });
+
+    startNewRound(true);
   };
 
   const handleAnswer = (selectedAnswer: string) => {
-    if (gameState.answered) return;
+    if (gameState?.answered) return;
 
-    const isCorrect = selectedAnswer === gameState.currentDestination?.name;
+    const isCorrect = selectedAnswer === gameState?.currentDestination?.name;
+
+    let score: number;
 
     if (isCorrect) {
       confetti(CONFETTI_CONFIG);
-    }
+      score =
+        gameState?.questionTime >= 10
+          ? 50
+          : gameState?.questionTime >= 5
+          ? 25
+          : 10;
+    } else if (!isCorrect && gameState?.streak > 5) setShowShareModal(true);
 
     setGameState((prev) => ({
       ...prev,
       answered: true,
       isCorrect,
+      streak: isCorrect ? prev?.streak + 1 : 0,
       score: {
-        correct: prev.score.correct + (isCorrect ? 1 : 0),
-        total: prev.score.total + 1,
+        correct:
+          prev?.score.correct +
+          (isCorrect ? score : 0) +
+          (prev?.streak >= 3 ? 10 : 0),
+        total: prev?.score.total + 50,
       },
     }));
   };
 
   useEffect(() => {
-    // Check for invitation parameters in URL
     const urlParams = new URLSearchParams(window.location.search);
     const inviterUsername = urlParams.get("username");
     const inviterCorrect = urlParams.get("correct");
@@ -142,8 +190,8 @@ export default function Home() {
     const baseUrl = window.location.origin + window.location.pathname;
     const params = new URLSearchParams({
       username: username,
-      correct: gameState.score.correct.toString(),
-      total: gameState.score.total.toString(),
+      correct: gameState?.score.correct.toString(),
+      total: gameState?.score.total.toString(),
     });
     return `${baseUrl}?${params.toString()}`;
   };
@@ -152,18 +200,16 @@ export default function Home() {
     if (!username.trim()) return;
 
     const shareUrl = generateShareLink();
-    const message = `Hey! I'm ${username} and I'm challenging you to beat my GlobeTrotter score of ${gameState.score.correct}/${gameState.score.total}! Try here: ${shareUrl}`;
+    const message = `Hey! I'm ${username} and I'm challenging you to beat my GlobeTrotter score of ${gameState?.score.correct}/${gameState?.score.total}! Try here: ${shareUrl}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
     setShowShareModal(false);
   };
 
-  // Add this function to handle copying
   const copyToClipboard = (text: string) => {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        // Could add a toast notification here
         console.log("Link copied!");
       })
       .catch((err) => {
@@ -182,10 +228,10 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md">
               <span className="text-[#666] font-medium">Score:</span>
               <span className="text-[#5d1eb5] font-bold text-lg">
-                {gameState.score.correct}
+                {gameState?.score?.correct}
               </span>
               <span className="text-[#666]">/</span>
-              <span className="text-[#666]">{gameState.score.total}</span>
+              <span className="text-[#666]">{gameState?.score?.total}</span>
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -211,10 +257,32 @@ export default function Home() {
 
         <div className="bg-white rounded-2xl shadow-xl p-6 flex-1 border border-[#e5e7eb] flex flex-col">
           <div className="space-y-3 mb-4">
-            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-4">
-              Where am I? 🤔
-            </h2>
-            {gameState.selectedClues.map((clue, index) => (
+            <div className=" flex justify-between items-center text-black">
+              <h2 className="text-xl font-semibold text-[#1a1a1a] mb-4">
+                Where am I? 🤔
+              </h2>
+              <h2>
+                Streak : {gameState?.streak}{" "}
+                <span>{gameState?.streak >= 3 && "Good going! "}</span>
+              </h2>
+              <h2>
+                Time left :{" "}
+                <span
+                  className={
+                    gameState?.questionTime >= 10
+                      ? "text-green-500"
+                      : gameState?.questionTime >= 5
+                      ? "text-yellow-500"
+                      : "text-red-500"
+                  }
+                >
+                  {gameState?.questionTime > 0
+                    ? gameState?.questionTime
+                    : "Times Up!"}
+                </span>
+              </h2>
+            </div>
+            {gameState?.selectedClues.map((clue, index) => (
               <div
                 key={index}
                 className="p-4 bg-gradient-to-r from-[#f8f9fa] to-white rounded-lg text-[#1a1a1a] border border-[#e5e7eb] shadow-sm"
@@ -228,15 +296,15 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 mb-4">
-            {gameState.options.map((option, index) => (
+            {gameState?.options.map((option, index) => (
               <button
                 key={index}
                 onClick={() => handleAnswer(option)}
-                disabled={gameState.answered}
-                className={`p-4 rounded-lg text-center transition-all duration-200
+                disabled={gameState?.answered}
+                className={`p-4 cursor-pointer rounded-lg text-center transition-all duration-400 hover:scale-105
                   ${
-                    gameState.answered
-                      ? option === gameState.currentDestination?.name
+                    gameState?.answered
+                      ? option === gameState?.currentDestination?.name
                         ? "bg-gradient-to-r from-green-500 to-green-400 text-white shadow-lg"
                         : "bg-red-50 text-red-500 border border-red-200"
                       : "bg-gradient-to-r from-[#5d1eb5] to-[#6f2ad4] text-white shadow-md hover:shadow-lg"
@@ -248,43 +316,44 @@ export default function Home() {
             ))}
           </div>
 
-          {gameState.answered && (
+          {gameState?.answered && (
             <div className="mt-auto">
               <div className="bg-gradient-to-r from-[#f8f9fa] to-white rounded-xl border-2 border-[#e5e7eb] shadow-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-3xl">
-                    {gameState.isCorrect ? "🎉" : "✨"}
+                    {gameState?.isCorrect ? "🎉" : "✨"}
                   </span>
                   <div>
                     <h3 className="text-lg font-semibold text-[#1a1a1a]">
-                      {gameState.isCorrect ? "Brilliant!" : "Nice try!"}
+                      {gameState?.isCorrect ? "Brilliant!" : "Nice try!"}
                     </h3>
                     <p className="text-sm text-[#666]">
-                      {gameState.isCorrect
+                      {gameState?.isCorrect
                         ? "Here's an interesting fact about this place:"
-                        : `The correct answer was ${gameState.currentDestination?.name}`}
+                        : `The correct answer was ${gameState?.currentDestination?.name}`}
                     </p>
                   </div>
                 </div>
                 <blockquote className="text-base italic text-[#5d1eb5] bg-[#f8f9fa] p-3 rounded-lg border-l-4 border-[#5d1eb5] mb-4">
-                  {gameState.currentDestination?.funFacts[0]}
+                  {gameState?.currentDestination?.funFacts[0]}
                 </blockquote>
 
                 <div className="flex gap-3">
-                  {!gameState.isCorrect && (
+                  {!gameState?.isCorrect ? (
                     <button
                       onClick={retryCurrentRound}
                       className="flex-1 p-3 bg-white text-[#5d1eb5] rounded-lg hover:bg-[#f8f9fa] transition-colors border-2 border-[#5d1eb5] font-medium"
                     >
                       Try Again
                     </button>
+                  ) : (
+                    <button
+                      onClick={startNewRound()}
+                      className="flex-1 p-3 bg-gradient-to-r from-[#5d1eb5] to-[#6f2ad4] text-white rounded-lg hover:shadow-lg transition-all font-medium"
+                    >
+                      Next Destination
+                    </button>
                   )}
-                  <button
-                    onClick={startNewRound}
-                    className="flex-1 p-3 bg-gradient-to-r from-[#5d1eb5] to-[#6f2ad4] text-white rounded-lg hover:shadow-lg transition-all font-medium"
-                  >
-                    Next Destination
-                  </button>
                 </div>
               </div>
             </div>
@@ -296,7 +365,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black opacity-70 flex items-center justify-center p-4 z-50"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -307,6 +376,10 @@ export default function Home() {
                 <h2 className="text-xl text-black font-semibold">
                   Challenge a Friend
                 </h2>
+                <p className="text-black my-2">
+                  You have attained a high streak of 5+ ! Invite friends to
+                  complete and beat the score{" "}
+                </p>
                 <button
                   onClick={() => setShowShareModal(false)}
                   className="text-[#666] hover:text-[#1a1a1a] transition-colors"
@@ -325,7 +398,7 @@ export default function Home() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Enter your name"
-                    className="w-full p-3 border border-[#e5e7eb] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5d1eb5] focus:border-transparent"
+                    className="w-full text-black p-3 border border-[#e5e7eb] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5d1eb5] focus:border-transparent"
                     maxLength={20}
                   />
                 </div>
@@ -335,7 +408,7 @@ export default function Home() {
                     Your Score
                   </label>
                   <div className="p-3 bg-[#f8f9fa] rounded-lg text-[#1a1a1a] font-medium">
-                    {gameState.score.correct}/{gameState.score.total}
+                    {gameState?.score.correct}/{gameState?.score.total}
                   </div>
                 </div>
 
