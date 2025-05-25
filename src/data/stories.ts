@@ -11,6 +11,15 @@ export const dummyStories = [
     ],
   },
   {
+    id: 2,
+    username: "lisa_brown",
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60&h=60&fit=crop&crop=face",
+    images: [
+      "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=450&h=800&fit=crop",
+    ],
+  },
+  {
     id: 3,
     username: "mike_johnson",
     avatar:
